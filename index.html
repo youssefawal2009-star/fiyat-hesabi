@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050504">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fiyat Hesabı">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Yeni Dekor · Fiyat Hesabı</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<style>
+  :root{
+    --bg:#f5efe6; --card:#fffdf9; --ink:#2b2118; --muted:#8a7b6c; --line:#e7ddcf;
+    --gold:#b8862b; --gold-soft:#f3e6c8; --warn:#c2410c; --warn-soft:#fdeee4; --ok:#15803d; --ok-soft:#e5f4ea;
+    --r:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  button,input{font:inherit;color:inherit}
+  button{cursor:pointer;border:0;background:none}
+  input{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px;background:#fff;outline:none;min-width:0}
+  input:focus{border-color:var(--gold)}
+
+  /* çizili simgeler */
+  .ic{display:block;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;fill:none}
+  .ic .f{fill:var(--tbg,var(--card))}
+  .ic .d{fill:var(--ink);stroke:none}
+  .emo{display:block;line-height:1;text-align:center}
+
+  header{position:relative;background:#050504;padding:calc(env(safe-area-inset-top) + 6px) 16px 8px;text-align:center}
+  header img{display:block;height:112px;width:auto;margin:0 auto}
+  .eye{position:absolute;right:12px;top:calc(env(safe-area-inset-top) + 10px);width:46px;height:46px;border-radius:50%;border:1.5px solid var(--gold);background:rgba(184,134,43,.12);display:flex;align-items:center;justify-content:center}
+  .eye:active{transform:scale(.92)}
+  .eye svg{width:24px;height:24px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  body.gizli .eye{background:var(--gold)}
+  body.gizli .eye svg{stroke:#050504}
+  /* gizli mod: yazılan fiyatlar nokta olur, toplam görünmez */
+  body.gizli .pr input{-webkit-text-security:disc}
+  body.gizli .ltot{filter:blur(6px)}
+
+  main{padding:4px 14px 130px;max-width:560px;margin:0 auto}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:22px 4px 8px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+  .card + .card{margin-top:10px}
+  .hint{color:var(--muted);font-size:14px;margin:4px 4px 10px}
+  .empty{color:var(--muted);text-align:center;margin:10px 0}
+
+  /* ürün simgeleri */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .tile{--tbg:var(--card);position:relative;background:var(--tbg);border:1.5px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;min-height:100px;overflow:hidden}
+  .tile.on{--tbg:var(--gold-soft);border-color:var(--gold)}
+  .tmain{flex:1;width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px 10px;transition:transform .08s}
+  .tmain:active{transform:scale(.92)}
+  .tile .ic{width:48px;height:48px}
+  .tile .nm{font-size:13px;font-weight:600;text-align:center;line-height:1.15}
+  .tile .nm small{font-size:11px;font-weight:500;color:var(--muted)}
+  /* seçili simgenin altında − adet + */
+  .tstep{display:flex;align-items:center;border-top:1.5px solid var(--line);background:var(--card)}
+  .tile.on .tstep{border-top-color:var(--gold)}
+  .tstep button:disabled{opacity:.25}
+  .tile:not(.on) .tstep b{color:var(--muted)}
+  .tstep button{width:40px;height:36px;font-size:22px;font-weight:700;color:var(--ink)}
+  .tstep button:active{background:var(--gold-soft)}
+  .tstep b{flex:1;text-align:center;font-size:15px}
+  .badge{position:absolute;top:6px;right:6px;background:var(--ink);color:#fff;border-radius:999px;min-width:24px;height:24px;padding:0 7px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+  /* sepet */
+  .line{padding:10px 0;border-bottom:1px solid var(--line)}
+  .line:first-child{padding-top:0}
+  .line:last-child{border-bottom:0;padding-bottom:0}
+  .lt{display:flex;align-items:center;gap:8px}
+  .lt .ic{width:30px;height:30px}
+  .lt .emo{font-size:24px;width:30px}
+  .lt .nm{flex:1;font-weight:700}
+  .lt .own{font-weight:500;color:var(--muted);font-size:14px}
+  .x{width:34px;height:34px;border-radius:10px;color:var(--muted);font-size:16px}
+  .x:active{background:var(--line)}
+  .lb{display:flex;gap:10px;margin-top:8px;align-items:center}
+  .step{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;flex:none}
+  .step button{width:42px;height:44px;font-size:22px;font-weight:700}
+  .step button:active{background:var(--line)}
+  .step b{min-width:28px;text-align:center}
+  .pr,.tlw{flex:1;position:relative}
+  .pr input,.tlw input{padding-right:38px;text-align:right;font-weight:700}
+  .pr span,.tlw span{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  .pr.miss input{border-color:var(--warn);background:var(--warn-soft)}
+  .pr.miss input::placeholder{color:var(--warn);font-weight:700}
+  .ltot{text-align:right;color:var(--muted);font-size:14px;margin-top:6px}
+
+
+  .clear{display:block;margin:12px auto 0;color:var(--muted);font-size:14px;padding:8px 12px}
+
+  /* en altta sadece toplam */
+  #bar{position:fixed;left:0;right:0;bottom:0;z-index:8;padding:10px 14px calc(env(safe-area-inset-bottom) + 10px);background:linear-gradient(transparent,var(--bg) 35%)}
+  #bar div{max-width:560px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;background:var(--ink);color:#fff;border-radius:18px;padding:14px 18px;box-shadow:0 8px 24px rgba(43,33,24,.25)}
+  #bar span{font-weight:700;color:#cdbfa9}
+  #bar b{font-size:24px;font-weight:800}
+  body.typing #bar{display:none}
+
+  #toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 16px);transform:translate(-50%,-140%);transition:transform .25s;z-index:30;background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);white-space:nowrap}
+  #toast.show{transform:translate(-50%,0)}
+  #toast .undo{margin-left:10px;color:var(--gold);font-weight:800;padding:4px 6px}
+</style>
+</head>
+<body>
+<header><img src="logo.png" alt="Yeni Dekor Mobilya"><button class="eye" id="eye" data-act="eye" aria-label="Fiyatları gizle / göster"><svg viewBox="0 0 24 24"></svg></button></header>
+<main id="app"></main>
+<div id="bar"><div><span>Toplam</span><b id="bt">0 ₺</b></div></div>
+<div id="toast"></div>
+
+<script>
+/* ---------- çizili mobilya simgeleri ---------- */
+const ICONS = {
+  koltuk: '<rect x="9" y="12" width="30" height="14" rx="3"/><rect class="f" x="4" y="20" width="7" height="14" rx="3"/><rect class="f" x="37" y="20" width="7" height="14" rx="3"/><path d="M11 26h26v8H11z"/><path d="M19.7 26v8M28.3 26v8M8 34v4M40 34v4"/>',
+  baza: '<rect x="4" y="24" width="40" height="12" rx="2"/><path d="M5 21l37-8 1 4-37 8z"/><path d="M9 30h30M7 36v3M41 36v3"/>',
+  yatak: '<rect x="3" y="17" width="42" height="15" rx="5"/><path d="M3 23h42"/><circle class="d" cx="11" cy="27.5" r="1.3"/><circle class="d" cx="19.5" cy="27.5" r="1.3"/><circle class="d" cx="28.5" cy="27.5" r="1.3"/><circle class="d" cx="37" cy="27.5" r="1.3"/>',
+  baslik: '<path d="M9 33V14q0-6 6-6h18q6 0 6 6v19z"/><path d="M12 33v9M36 33v9"/><circle class="d" cx="17" cy="15" r="1.4"/><circle class="d" cx="24" cy="15" r="1.4"/><circle class="d" cx="31" cy="15" r="1.4"/><circle class="d" cx="17" cy="23" r="1.4"/><circle class="d" cx="24" cy="23" r="1.4"/><circle class="d" cx="31" cy="23" r="1.4"/>',
+  yatakodasi: '<rect x="4" y="10" width="6" height="28" rx="2"/><rect x="10" y="22" width="34" height="8" rx="2"/><path d="M10 30h34v5H10z"/><rect x="13" y="17" width="10" height="5" rx="2.5"/><path d="M27 22c5-3 11-3 17 0M42 35v3"/>',
+  kose: '<path d="M5 6h13v24h25v12H5z"/><path d="M10 6v31h33M10 18h8M30 30v7"/>',
+  masa: '<rect x="12" y="19" width="24" height="4" rx="1"/><path d="M15 23v16M33 23v16"/><path d="M4 11v28M4 29h7M11 29v10M44 11v28M44 29h-7M37 29v10"/>',
+  sandalye: '<rect x="14" y="5" width="20" height="17" rx="3"/><path d="M19 10h10M19 15h10M17 22v3M31 22v3"/><rect x="11" y="25" width="26" height="5" rx="1.5"/><path d="M14 30v13M34 30v13"/>',
+  konsol: '<rect x="4" y="15" width="40" height="4" rx="1"/><rect x="8" y="19" width="32" height="9" rx="1"/><path d="M24 19v9M14 23.5h4M30 23.5h4M10 28l-2 13M38 28l2 13"/><path d="M20 15v-4q4-4 8 0v4"/>',
+  tv: '<rect x="2" y="24" width="44" height="12" rx="2"/><path d="M16.7 24v12M31.3 24v12M8 30h3M22 30h4M37 30h3M6 36v4M42 36v4"/><path d="M8 24v-3h6v3M36 24v-6h4v6"/>',
+  orta: '<ellipse cx="24" cy="21" rx="19" ry="6"/><path d="M5 21v3M43 21v3"/><path d="M5 24q19 10 38 0"/><path d="M11 28v10M37 28v10M19 30.5v8M29 30.5v8"/>',
+  nakliye: '<path d="M3 13h24v19H3z"/><path d="M27 19h9l7 8v5H27z"/><path d="M30 22h5l4 5h-9z"/><circle class="f" cx="11" cy="34" r="4"/><circle class="f" cx="35" cy="34" r="4"/>',
+  taksit: '<rect x="4" y="10" width="40" height="28" rx="4"/><path d="M4 17h40M9 31h8"/><circle cx="29" cy="24" r="2"/><circle cx="38" cy="32" r="2"/><path d="M39 23l-11 10"/>',
+  hediye: '<rect x="6" y="18" width="36" height="8" rx="1.5"/><path d="M9 26v16h30V26M24 18v24"/><path d="M24 18c-3-8-12-9-12-4 0 3 6 4 12 4zM24 18c3-8 12-9 12-4 0 3-6 4-12 4z"/>',
+  zigon: '<rect class="f" x="4" y="10" width="26" height="4" rx="1"/><path d="M7 14v26M27 14v26"/><rect class="f" x="13" y="19" width="24" height="4" rx="1"/><path d="M16 23v17M34 23v17"/><rect class="f" x="22" y="28" width="22" height="4" rx="1"/><path d="M25 32v8M41 32v8"/>',
+};
+const iconHtml = e => `<svg class="ic" viewBox="0 0 48 48" aria-hidden="true">${ICONS[e] || ''}</svg>`;
+
+const PRODUCTS = [
+  ['koltuk', 'Koltuk'], ['yatakodasi', 'Yatak odası'],
+  ['baza', 'Baza'], ['yatak', 'Yatak'], ['baslik', 'Başlık'], ['kose', 'Köşe takımı'],
+  ['masa', 'Yemek masası'], ['sandalye', 'Sandalye'], ['konsol', 'Konsol'],
+  ['tv', 'TV ünitesi'],
+].map(([id, n]) => ({ id, n }));
+// ek masraflar: sepette ürünlerle aynı görünür (adet + fiyat)
+const EXTRAS = [['nakliye', 'Nakliye + Kurulum'], ['taksit', 'Taksit farkı'], ['hediye', 'Hediye']].map(([id, n]) => ({ id, n }));
+const nameOf = id => (PRODUCTS.find(p => p.id === id) || EXTRAS.find(p => p.id === id) || {}).n || '';
+const isProduct = id => PRODUCTS.some(p => p.id === id);
+
+const LS = 'fiyatHesabi.v7';
+const LS_HIDE = 'fiyatHesabi.gizli';
+let hidden = localStorage.getItem(LS_HIDE) === '1';
+const EYE_OPEN = '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';
+const EYE_OFF = '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M3 3l18 18"/>';
+const uid = () => Math.random().toString(36).slice(2, 9);
+// her satır: { id, pid, p: fiyat, q: adet }. Nakliye her ürün için ayrı satır olarak eklenebilir.
+const newCart = () => ({ lines: [] });
+let C = load();
+function load() {
+  try { const c = JSON.parse(localStorage.getItem(LS)); if (c && c.lines) return c; } catch (e) {}
+  return newCart();
+}
+function save() { localStorage.setItem(LS, JSON.stringify(C)); }
+
+const $ = id => document.getElementById(id);
+const app = $('app');
+const num = n => Math.round(n).toLocaleString('tr-TR');
+const fmt = n => num(n) + ' ₺';
+const parseTL = s => parseInt(String(s).replace(/\D/g, ''), 10) || 0;
+const qtyOf = pid => C.lines.filter(l => l.pid === pid).reduce((a, l) => a + l.q, 0);
+const lineById = id => C.lines.find(l => l.id === id);
+
+let undoCart = null;
+function toastUndo(t) { const el = $('toast'); el.innerHTML = `${t} <button class="undo" data-act="undo">Geri al</button>`; el.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => { el.classList.remove('show'); undoCart = null; }, 5000); }
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => el.classList.remove('show'), 1600); }
+
+/* ---------- hesap ---------- */
+const total = () => C.lines.reduce((a, l) => a + l.p * l.q, 0);
+
+const priceBox = (id, v) =>
+  `<label class="pr ${v ? '' : 'miss'}" id="pr-${id}"><input inputmode="numeric" data-k="lp" data-id="${id}" value="${v ? num(v) : ''}"><span>₺</span></label>`;
+const ltText = l => `${l.q} × ${num(l.p)} = ${fmt(l.p * l.q)}`;
+
+function lineHtml(l, owner) {
+  return `<div class="line">
+    <div class="lt">${iconHtml(l.pid)}<span class="nm">${nameOf(l.pid)}${owner ? ` <small class="own">(${owner})</small>` : ''}</span><button class="x" data-act="del" data-id="${l.id}" aria-label="Sil">✕</button></div>
+    <div class="lb">
+      <div class="step"><button data-act="dec" data-id="${l.id}">−</button><b>${l.q}</b><button data-act="inc" data-id="${l.id}">+</button></div>
+      ${priceBox(l.id, l.p)}
+    </div>
+    ${l.q > 1 ? `<div class="ltot" id="lt-${l.id}">${ltText(l)}</div>` : ''}
+  </div>`;
+}
+
+function render() {
+  // − adet + her simgede hep hazır durur; dec: eksiltme eylemi, inc: ekleme eylemi
+  const tile = (inc, dec, id, n, count) => `<div class="tile ${count ? 'on' : ''}">
+      <button class="tmain" data-act="${inc}" data-id="${id}">${iconHtml(id)}<span class="nm">${n}</span></button>
+      <div class="tstep"><button data-act="${dec}" data-id="${id}" ${count ? '' : 'disabled'} aria-label="Eksilt">−</button><b>${count}</b><button data-act="${inc}" data-id="${id}" aria-label="Ekle">+</button></div>
+    </div>`;
+  let owner = '';  // nakliyenin yanında, kendinden önce eklenen ürünün adı yazar
+  const body = C.lines.map(l => {
+    if (l.pid === 'nakliye') return lineHtml(l, owner);
+    if (isProduct(l.pid)) owner = nameOf(l.pid);
+    return lineHtml(l);
+  }).join('');
+  app.innerHTML = `
+    <h2>Ürüne dokun, sepete eklensin</h2>
+    <div class="grid">${PRODUCTS.map(p => tile('add', 'pdec', p.id, p.n, qtyOf(p.id))).join('')}</div>
+    <h2>Ek masraflar — unutma!</h2>
+    <div class="grid">
+      ${tile('nakadd', 'nakpop', 'nakliye', 'Nakliye + Kurulum', qtyOf('nakliye'))}
+      ${tile('add', 'pdec', 'taksit', 'Taksit farkı', qtyOf('taksit'))}
+      ${tile('add', 'pdec', 'hediye', 'Hediye<br><small>Orta / Zigon sehpa</small>', qtyOf('hediye'))}
+    </div>
+    <h2>Sepet</h2>
+    <div class="card">${body || '<p class="empty">Henüz ürün yok. Yukarıdaki simgelere dokun.</p>'}</div>
+    ${body ? '<button class="clear" data-act="clear">🗑️ Sepeti temizle</button>' : ''}`;
+  renderTotal();
+}
+function renderTotal() { $('bt').textContent = hidden ? '••••••' : fmt(total()); }
+function renderEye() { document.body.classList.toggle('gizli', hidden); $('eye').querySelector('svg').innerHTML = hidden ? EYE_OFF : EYE_OPEN; }
+function rerenderKeepScroll() { const y = scrollY; render(); scrollTo(0, y); }
+
+/* ---------- olaylar ---------- */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const id = b.dataset.id;
+  switch (b.dataset.act) {
+    case 'eye': hidden = !hidden; localStorage.setItem(LS_HIDE, hidden ? '1' : '0'); renderEye(); renderTotal(); return;
+    case 'add': {
+      const l = C.lines.find(x => x.pid === id);
+      if (l) l.q++; else C.lines.push({ id: uid(), pid: id, p: 0, q: 1 });
+      navigator.vibrate?.(10);
+      toast(`${nameOf(id)} eklendi`);
+      break;
+    }
+    case 'nakadd': C.lines.push({ id: uid(), pid: 'nakliye', p: 0, q: 1 }); toast('Nakliye + Kurulum eklendi'); break;
+    case 'nakpop': { const l = C.lines.filter(x => x.pid === 'nakliye').pop(); if (!l) return; l.q--; if (l.q < 1) C.lines = C.lines.filter(x => x !== l); break; }
+    case 'pdec': { const l = C.lines.find(x => x.pid === id); if (!l) return; l.q--; if (l.q < 1) C.lines = C.lines.filter(x => x !== l); break; }
+    case 'inc': lineById(id).q++; break;
+    case 'dec': { const l = lineById(id); l.q--; if (l.q < 1) C.lines = C.lines.filter(x => x !== l); break; }
+    case 'del': C.lines = C.lines.filter(x => x.id !== id); break;
+    // onay penceresi yok: tek dokunuşta sıfırlanır, yanlışlıkla basılırsa 5 sn içinde geri alınabilir
+    case 'clear': undoCart = C; C = newCart(); toastUndo('Sepet temizlendi'); break;
+    case 'undo': if (!undoCart) return; C = undoCart; undoCart = null; $('toast').classList.remove('show'); break;
+  }
+  save(); rerenderKeepScroll();
+});
+
+document.addEventListener('input', e => {
+  const t = e.target; if (t.dataset.k !== 'lp') return;
+  const n = parseTL(t.value);
+  t.value = n ? num(n) : '';
+  $('pr-' + t.dataset.id)?.classList.toggle('miss', !n);
+  const l = lineById(t.dataset.id); l.p = n;
+  const lt = $('lt-' + l.id); if (lt) lt.textContent = ltText(l);
+  save(); renderTotal();
+});
+// Kutuya yazarken alttaki toplam klavyenin önünü kapatmasın
+document.addEventListener('focusin', e => { if (e.target.matches('input')) document.body.classList.add('typing'); });
+document.addEventListener('focusout', () => document.body.classList.remove('typing'));
+document.addEventListener('touchstart', () => {}, { passive: true }); // iOS'ta :active çalışsın
+
+renderEye();
+render();
+</script>
+</body>
+</html>
