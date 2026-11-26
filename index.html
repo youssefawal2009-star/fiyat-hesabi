@@ -73,6 +73,12 @@
   .line:first-child{padding-top:0}
   .line:last-child{border-bottom:0;padding-bottom:0}
   .lt{display:flex;align-items:center;gap:8px}
+  /* tut-sürükle tutamacı */
+  .grip{flex:none;width:30px;height:38px;margin-left:-6px;display:flex;align-items:center;justify-content:center;touch-action:none;cursor:grab;border-radius:8px}
+  .grip svg{width:12px;height:20px;fill:var(--muted)}
+  .grip:active{background:var(--gold-soft)}
+  .line.dragging{background:var(--gold-soft);box-shadow:0 0 0 2px var(--gold),0 10px 24px rgba(43,33,24,.18);border-radius:12px;position:relative;z-index:2}
+  body.dragmode{user-select:none;-webkit-user-select:none}
   .lt .ic{width:30px;height:30px}
   .lt .emo{font-size:24px;width:30px}
   .lt .nm{flex:1;font-weight:700}
@@ -179,8 +185,8 @@ const priceBox = (id, v) =>
 const ltText = l => `${l.q} × ${num(l.p)} = ${fmt(l.p * l.q)}`;
 
 function lineHtml(l, owner) {
-  return `<div class="line">
-    <div class="lt">${iconHtml(l.pid)}<span class="nm">${nameOf(l.pid)}${owner ? ` <small class="own">(${owner})</small>` : ''}</span><button class="x" data-act="del" data-id="${l.id}" aria-label="Sil">✕</button></div>
+  return `<div class="line" data-id="${l.id}">
+    <div class="lt"><span class="grip" aria-label="Tut ve sürükle"><svg viewBox="0 0 12 20"><circle cx="3" cy="4" r="1.6"/><circle cx="9" cy="4" r="1.6"/><circle cx="3" cy="10" r="1.6"/><circle cx="9" cy="10" r="1.6"/><circle cx="3" cy="16" r="1.6"/><circle cx="9" cy="16" r="1.6"/></svg></span>${iconHtml(l.pid)}<span class="nm">${nameOf(l.pid)}${owner ? ` <small class="own">(${owner})</small>` : ''}</span><button class="x" data-act="del" data-id="${l.id}" aria-label="Sil">✕</button></div>
     <div class="lb">
       <div class="step"><button data-act="dec" data-id="${l.id}">−</button><b>${l.q}</b><button data-act="inc" data-id="${l.id}">+</button></div>
       ${priceBox(l.id, l.p)}
@@ -211,6 +217,7 @@ function render() {
       ${tile('add', 'pdec', 'hediye', 'Hediye<br><small>Orta / Zigon sehpa</small>', qtyOf('hediye'))}
     </div>
     <h2>Sepet</h2>
+    ${C.lines.length > 1 ? '<p class="hint">Sırayı değiştirmek için soldaki noktalardan tut ve sürükle.</p>' : ''}
     <div class="card">${body || '<p class="empty">Henüz ürün yok. Yukarıdaki simgelere dokun.</p>'}</div>
     ${body ? '<button class="clear" data-act="clear">🗑️ Sepeti temizle</button>' : ''}`;
   renderTotal();
@@ -254,6 +261,49 @@ document.addEventListener('input', e => {
   const lt = $('lt-' + l.id); if (lt) lt.textContent = ltText(l);
   save(); renderTotal();
 });
+/* ---------- sepette tut-sürükle ile sıralama ---------- */
+// Tutamaçtan tutulan satır, parmak komşu satırın ortasını geçince onunla yer değiştirir.
+// Parmak ekranın üst/alt kenarına gelince sayfa kendiliğinden kayar (uzak yere taşımak için).
+let drag = null;
+document.addEventListener('pointerdown', e => {
+  const g = e.target.closest('.grip'); if (!g) return;
+  e.preventDefault();
+  const line = g.closest('.line');
+  drag = { line, list: line.parentElement, y: e.clientY };
+  g.setPointerCapture?.(e.pointerId);
+  line.classList.add('dragging'); document.body.classList.add('dragmode');
+  navigator.vibrate?.(15);
+  requestAnimationFrame(autoScroll);
+});
+document.addEventListener('pointermove', e => { if (!drag) return; drag.y = e.clientY; reorderStep(); });
+function reorderStep() {
+  const { line, list, y } = drag;
+  for (let i = 0; i < 50; i++) {
+    const prev = line.previousElementSibling, next = line.nextElementSibling;
+    if (prev && y < prev.getBoundingClientRect().top + prev.offsetHeight / 2) list.insertBefore(line, prev);
+    else if (next && y > next.getBoundingClientRect().top + next.offsetHeight / 2) list.insertBefore(next, line);
+    else break;
+  }
+}
+function autoScroll() {
+  if (!drag) return;
+  const edge = 90, bottom = innerHeight - 110;  // altta toplam çubuğu var
+  if (drag.y < edge) scrollBy(0, -Math.ceil((edge - drag.y) / 6));
+  else if (drag.y > bottom) scrollBy(0, Math.ceil((drag.y - bottom) / 6));
+  reorderStep();
+  requestAnimationFrame(autoScroll);
+}
+function endDrag() {
+  if (!drag) return;
+  const order = [...drag.list.querySelectorAll('.line')].map(el => el.dataset.id);
+  C.lines.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  drag.line.classList.remove('dragging'); document.body.classList.remove('dragmode');
+  drag = null;
+  save(); rerenderKeepScroll();
+}
+document.addEventListener('pointerup', endDrag);
+document.addEventListener('pointercancel', endDrag);
+
 // Kutuya yazarken alttaki toplam klavyenin önünü kapatmasın
 document.addEventListener('focusin', e => { if (e.target.matches('input')) document.body.classList.add('typing'); });
 document.addEventListener('focusout', () => document.body.classList.remove('typing'));
