@@ -29,6 +29,7 @@
   .ic{display:block;stroke:var(--ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
   .ic .f{fill:var(--tbg,var(--card))}
   .ic .d{fill:var(--ink);stroke:none}
+  .ic .t{stroke-width:1.2}
   .emo{display:block;line-height:1;text-align:center}
 
   header{background:#050504;padding:calc(env(safe-area-inset-top) + 6px) 16px 8px;text-align:center}
@@ -128,10 +129,10 @@ const ICONS = {
   // Hepsi önden görünüş, aynı çizgi kalınlığı, aynı zemin çizgisi (y=42)
   koltuk: '<rect class="f" x="7.5" y="16" width="49" height="11" rx="2"/><rect class="f" x="6" y="22" width="3.2" height="14" rx="1.3"/><rect class="f" x="54.8" y="22" width="3.2" height="14" rx="1.3"/><rect class="f" x="9.2" y="27" width="45.6" height="9" rx="1"/><path d="M24.40 27v9M39.60 27v9"/><path d="M7.6 36V42M56.4 36V42"/>',
   yatakodasi: '<rect x="4" y="29" width="10" height="10" rx="1.2"/><path d="M4 34h10M7.5 32h3M5.5 39v3M12.5 39v3"/><path d="M9 29v-5M6 24h6l-1.5-4.5h-3z"/><path d="M19 34V17q0-5 5-5h16q5 0 5 5V34"/><rect class="f" x="22" y="23" width="8" height="5" rx="2.5"/><rect class="f" x="34" y="23" width="8" height="5" rx="2.5"/><rect class="f" x="17" y="27" width="30" height="11" rx="2"/><path d="M17 31.5h30M19 38v4M45 38v4"/><rect x="50" y="29" width="10" height="10" rx="1.2"/><path d="M50 34h10M53.5 32h3M51.5 39v3M58.5 39v3"/><path d="M55 29v-5M52 24h6l-1.5-4.5h-3z"/>',
-  baza: '<path d="M9 7h30l4 8H5z"/><path d="M9 15l2 11M39 15l-2 11"/><rect x="4" y="26" width="40" height="12" rx="2"/><rect class="d" x="7" y="27.5" width="34" height="3" rx="1"/><path d="M8 38v4M40 38v4"/>',
+  baza: '<rect x="4" y="24" width="40" height="12" rx="2"/><path d="M5 21l37-8 1 4-37 8z"/><path d="M9 30h30M7 36v3M41 36v3"/>',
   yatak: '<rect x="3" y="22" width="42" height="18" rx="5"/><path d="M3 28h42"/><circle class="d" cx="10" cy="34" r="1.4"/><circle class="d" cx="19.3" cy="34" r="1.4"/><circle class="d" cx="28.7" cy="34" r="1.4"/><circle class="d" cx="38" cy="34" r="1.4"/>',
-  baslik: '<path d="M6 35V13q0-5 5-5h26q5 0 5 5v22z"/><path d="M10 35v7M38 35v7"/><circle class="d" cx="13" cy="15" r="1.4"/><circle class="d" cx="21" cy="15" r="1.4"/><circle class="d" cx="29" cy="15" r="1.4"/><circle class="d" cx="37" cy="15" r="1.4"/><circle class="d" cx="17" cy="22" r="1.4"/><circle class="d" cx="25" cy="22" r="1.4"/><circle class="d" cx="33" cy="22" r="1.4"/><circle class="d" cx="13" cy="29" r="1.4"/><circle class="d" cx="21" cy="29" r="1.4"/><circle class="d" cx="29" cy="29" r="1.4"/><circle class="d" cx="37" cy="29" r="1.4"/>',
-  kose: '<rect x="3" y="14" width="42" height="10" rx="2"/><rect class="f" x="1" y="20" width="5" height="15" rx="1.5"/><rect class="f" x="6" y="24" width="24" height="9" rx="1"/><path d="M14 24v9M22 24v9M3 35v4"/><rect class="f" x="26" y="25" width="20" height="14" rx="1.5"/><path d="M26 30h20M28 39v3M44 39v3"/>',
+  baslik: '<path d="M7 35V15q0-3 3-4q22-7 44 0q3 1 3 4v20z"/><path class="t" d="M11 33V16.5q0-1.5 1.5-2q19.5-6 39 0q1.5.5 1.5 2V33z"/><path class="t" d="M14 25l6-6 6 6 6-6 6 6 6-6 6 6M14 25l6 6 6-6 6 6 6-6 6 6 6-6"/><circle class="d" cx="20" cy="19" r="1.3"/><circle class="d" cx="32" cy="19" r="1.3"/><circle class="d" cx="44" cy="19" r="1.3"/><circle class="d" cx="14" cy="25" r="1.3"/><circle class="d" cx="26" cy="25" r="1.3"/><circle class="d" cx="38" cy="25" r="1.3"/><circle class="d" cx="50" cy="25" r="1.3"/><circle class="d" cx="20" cy="31" r="1.3"/><circle class="d" cx="32" cy="31" r="1.3"/><circle class="d" cx="44" cy="31" r="1.3"/><path d="M12 35v7M52 35v7"/>',
+  kose: '<path d="M5 6h13v24h25v12H5z"/><path d="M10 6v31h33M10 18h8M30 30v7"/>',
   masa: '<rect x="3" y="17" width="58" height="4.5" rx="1.2"/><path d="M8 21.5V42M56 21.5V42M8 26h48"/>',
   sandalye: '<path d="M15 25V10q0-5 5-5h8q5 0 5 5v15"/><path d="M19 11h10"/><rect class="f" x="11" y="24" width="26" height="6" rx="2"/><path d="M14 30l-1 12M34 30l1 12"/>',
   konsol: '<rect x="6" y="14" width="52" height="3.5" rx="1"/><rect x="8" y="17.5" width="48" height="12" rx="1"/><path d="M24 17.5v12M40 17.5v12M10.5 29.5l-1 12.5M53.5 29.5l1 12.5"/><circle class="d" cx="16" cy="23.5" r="1.3"/><circle class="d" cx="32" cy="23.5" r="1.3"/><circle class="d" cx="48" cy="23.5" r="1.3"/>',
@@ -141,7 +142,7 @@ const ICONS = {
   hediye: '<rect x="6" y="19" width="36" height="8" rx="1.5"/><path d="M9 27v15h30V27M24 19v23"/><path d="M24 19c-3-8-12-9-12-4 0 3 6 4 12 4zM24 19c3-8 12-9 12-4 0 3-6 4-12 4z"/>',
 };
 // Hepsi aynı 64x48 alanda çizilir; 48 genişliğindeki simgeler ortalanır.
-const WIDE = ['koltuk', 'yatakodasi', 'masa', 'konsol'];
+const WIDE = ['koltuk', 'yatakodasi', 'masa', 'konsol', 'baslik'];
 const iconHtml = e => `<svg class="ic" viewBox="${WIDE.includes(e) ? '0' : '-8'} 0 64 48" aria-hidden="true">${ICONS[e] || ''}</svg>`;
 
 const PRODUCTS = [
