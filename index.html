@@ -70,14 +70,17 @@
 
   /* sepet */
   .line{padding:10px 0;border-bottom:1px solid var(--line)}
-  .line:first-child{padding-top:0}
-  .line:last-child{border-bottom:0;padding-bottom:0}
+  .line:last-child{border-bottom-color:transparent}
   .lt{display:flex;align-items:center;gap:8px}
   /* tut-sürükle tutamacı */
   .grip{flex:none;width:30px;height:38px;margin-left:-6px;display:flex;align-items:center;justify-content:center;touch-action:none;cursor:grab;border-radius:8px}
   .grip svg{width:12px;height:20px;fill:var(--muted)}
   .grip:active{background:var(--gold-soft)}
-  .line.dragging{background:var(--gold-soft);box-shadow:0 0 0 2px var(--gold),0 10px 24px rgba(43,33,24,.18);border-radius:12px;position:relative;z-index:2}
+  .line{position:relative;background:var(--card)}
+  .line.shifting{transition:transform .22s cubic-bezier(.2,.8,.2,1)}
+  .line.dragging{z-index:5;border-radius:14px;border-bottom-color:transparent;box-shadow:0 0 0 2px var(--gold),0 16px 34px rgba(43,33,24,.28);background:var(--gold-soft);transition:box-shadow .2s}
+  .line.dropping{transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s;box-shadow:0 0 0 2px var(--gold),0 2px 6px rgba(43,33,24,.12)}
+  .card.cart{padding:2px 12px}
   body.dragmode{user-select:none;-webkit-user-select:none}
   .lt .ic{width:30px;height:30px}
   .lt .emo{font-size:24px;width:30px}
@@ -218,7 +221,7 @@ function render() {
     </div>
     <h2>Sepet</h2>
     ${C.lines.length > 1 ? '<p class="hint">Sırayı değiştirmek için soldaki noktalardan tut ve sürükle.</p>' : ''}
-    <div class="card">${body || '<p class="empty">Henüz ürün yok. Yukarıdaki simgelere dokun.</p>'}</div>
+    <div class="card cart">${body || '<p class="empty">Henüz ürün yok. Yukarıdaki simgelere dokun.</p>'}</div>
     ${body ? '<button class="clear" data-act="clear">🗑️ Sepeti temizle</button>' : ''}`;
   renderTotal();
 }
@@ -262,44 +265,71 @@ document.addEventListener('input', e => {
   save(); renderTotal();
 });
 /* ---------- sepette tut-sürükle ile sıralama ---------- */
-// Tutamaçtan tutulan satır, parmak komşu satırın ortasını geçince onunla yer değiştirir.
-// Parmak ekranın üst/alt kenarına gelince sayfa kendiliğinden kayar (uzak yere taşımak için).
+// Tutulan satır havaya kalkar ve parmağı takip eder; diğer satırlar kayarak ona yer açar.
+// Bırakınca satır yeni yerine yumuşakça oturur. Kenara gelince sayfa kendiliğinden kayar.
 let drag = null;
+const docY = clientY => clientY + scrollY;
+
 document.addEventListener('pointerdown', e => {
-  const g = e.target.closest('.grip'); if (!g) return;
+  const g = e.target.closest('.grip'); if (!g || drag) return;
   e.preventDefault();
-  const line = g.closest('.line');
-  drag = { line, list: line.parentElement, y: e.clientY };
+  const line = g.closest('.line'), list = line.parentElement;
+  const items = [...list.querySelectorAll('.line')].map(el => {
+    const r = el.getBoundingClientRect();
+    return { el, top: docY(r.top), h: el.offsetHeight };
+  });
+  const i0 = items.findIndex(it => it.el === line);
+  drag = { line, items, i0, t: i0, startY: docY(e.clientY), y: e.clientY, h: items[i0].h };
   g.setPointerCapture?.(e.pointerId);
+  items.forEach(it => { if (it.el !== line) it.el.classList.add('shifting'); });
   line.classList.add('dragging'); document.body.classList.add('dragmode');
+  line.style.transform = 'translateY(0) scale(1.03)';
   navigator.vibrate?.(15);
   requestAnimationFrame(autoScroll);
 });
-document.addEventListener('pointermove', e => { if (!drag) return; drag.y = e.clientY; reorderStep(); });
-function reorderStep() {
-  const { line, list, y } = drag;
-  for (let i = 0; i < 50; i++) {
-    const prev = line.previousElementSibling, next = line.nextElementSibling;
-    if (prev && y < prev.getBoundingClientRect().top + prev.offsetHeight / 2) list.insertBefore(line, prev);
-    else if (next && y > next.getBoundingClientRect().top + next.offsetHeight / 2) list.insertBefore(next, line);
-    else break;
-  }
+document.addEventListener('pointermove', e => { if (!drag || drag.dropping) return; drag.y = e.clientY; follow(); });
+
+function follow() {
+  const { line, items, i0, h } = drag;
+  const dy = docY(drag.y) - drag.startY;
+  line.style.transform = `translateY(${dy}px) scale(1.03)`;
+  // tutulan satırın ortası hangi satırların ortasını geçti?
+  const c = items[i0].top + h / 2 + dy;
+  let t = 0;
+  items.forEach((it, k) => { if (k !== i0 && it.top + it.h / 2 < c) t++; });
+  if (t !== drag.t) { drag.t = t; navigator.vibrate?.(8); }
+  items.forEach((it, k) => {
+    if (k === i0) return;
+    let shift = 0;
+    if (k > i0 && k <= t) shift = -h;
+    if (k < i0 && k >= t) shift = h;
+    it.el.style.transform = shift ? `translateY(${shift}px)` : '';
+  });
 }
 function autoScroll() {
-  if (!drag) return;
+  if (!drag || drag.dropping) return;
   const edge = 90, bottom = innerHeight - 110;  // altta toplam çubuğu var
-  if (drag.y < edge) scrollBy(0, -Math.ceil((edge - drag.y) / 6));
-  else if (drag.y > bottom) scrollBy(0, Math.ceil((drag.y - bottom) / 6));
-  reorderStep();
+  if (drag.y < edge) { scrollBy(0, -Math.ceil((edge - drag.y) / 6)); follow(); }
+  else if (drag.y > bottom) { scrollBy(0, Math.ceil((drag.y - bottom) / 6)); follow(); }
   requestAnimationFrame(autoScroll);
 }
 function endDrag() {
-  if (!drag) return;
-  const order = [...drag.list.querySelectorAll('.line')].map(el => el.dataset.id);
-  C.lines.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
-  drag.line.classList.remove('dragging'); document.body.classList.remove('dragmode');
-  drag = null;
-  save(); rerenderKeepScroll();
+  if (!drag || drag.dropping) return;
+  const { line, items, i0, t } = drag;
+  drag.dropping = true;
+  // yeni yerine oturma mesafesi
+  let target = 0;
+  if (t > i0) for (let k = i0 + 1; k <= t; k++) target += items[k].h;
+  if (t < i0) for (let k = t; k < i0; k++) target -= items[k].h;
+  line.classList.add('dropping');
+  line.style.transform = `translateY(${target}px) scale(1)`;
+  setTimeout(() => {
+    const [moved] = C.lines.splice(i0, 1);
+    C.lines.splice(t, 0, moved);
+    document.body.classList.remove('dragmode');
+    drag = null;
+    save(); rerenderKeepScroll();
+  }, 220);
 }
 document.addEventListener('pointerup', endDrag);
 document.addEventListener('pointercancel', endDrag);
