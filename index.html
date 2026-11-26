@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050504">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Fiyat Hesabı">
@@ -102,6 +103,7 @@
   .ltot{text-align:right;color:var(--muted);font-size:14px;margin-top:6px}
 
 
+  .ver{text-align:center;color:var(--muted);font-size:11px;margin:18px 0 0;opacity:.7}
   .clear{display:block;margin:12px auto 0;color:var(--muted);font-size:14px;padding:8px 12px}
 
   /* en altta sadece toplam */
@@ -225,7 +227,8 @@ function render() {
     <h2>Sepet</h2>
     ${C.lines.length > 1 ? '<p class="hint">Sırayı değiştirmek için sağdaki noktalardan tut ve sürükle.</p>' : ''}
     <div class="card cart">${body || '<p class="empty">Henüz ürün yok. Yukarıdaki simgelere dokun.</p>'}</div>
-    ${body ? '<button class="clear" data-act="clear">🗑️ Sepeti temizle</button>' : ''}`;
+    ${body ? '<button class="clear" data-act="clear">🗑️ Sepeti temizle</button>' : ''}
+    <p class="ver">Sürüm ${APP_VERSION}</p>`;
   renderTotal();
 }
 function renderTotal() { $('bt').textContent = hidden ? '••••••' : fmt(total()); }
@@ -341,6 +344,21 @@ document.addEventListener('pointercancel', endDrag);
 document.addEventListener('focusin', e => { if (e.target.matches('input')) document.body.classList.add('typing'); });
 document.addEventListener('focusout', () => document.body.classList.remove('typing'));
 document.addEventListener('touchstart', () => {}, { passive: true }); // iOS'ta :active çalışsın
+
+/* ---------- kendini güncelleme ----------
+   Telefon ya da GitHub eski sürümü saklasa bile: açılışta ve uygulamaya her dönüşte
+   sitedeki sürüm numarasına bakılır; farklıysa sayfa yeni sürümle yeniden yüklenir.
+   Her yayında APP_VERSION değiştirilmeli. */
+const APP_VERSION = '2026.11.26-2345';
+async function checkUpdate() {
+  try {
+    const r = await fetch('./?nocache=' + Date.now(), { cache: 'no-store' });
+    const m = (await r.text()).match(/const APP_VERSION = '([^']+)'/);
+    if (m && m[1] !== APP_VERSION) location.replace('./?v=' + m[1]);
+  } catch (e) { /* internet yoksa eski sürümle devam */ }
+}
+checkUpdate();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(); });
 
 renderEye();
 render();
